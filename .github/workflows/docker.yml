@@ -1,20 +1,36 @@
 # a docker image is built on each commit and pushed to docker hub
 name: Docker Image CI
-
 on:
   push:
     branches: ["master"]
-
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: zuptalo
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+      
       - name: clone movim_docker repo
         run: git clone --depth 1 https://github.com/movim/movim_docker/
-      - name: Build the docker image
-        run: cd movim_docker/ && docker build -t movim/movim:master --build-arg MOVIM_VERSION=master .
-      - name: Authenticate to docker hub
-        run: docker login -u edhelas -p ${{ secrets.DOCKER_HUB_TOKEN }}
-      - name: push docker image to docker hub
-        run: docker push movim/movim:master
+      
+      - name: Build and push multi-arch Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./movim_docker/
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: movim/movim:master
+          build-args: |
+            MOVIM_VERSION=master
