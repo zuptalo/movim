@@ -31,6 +31,6 @@ jobs:
           context: ./movim_docker/
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: movim/movim:master
+          tags: zuptalo/movim:master
           build-args: |
             MOVIM_VERSION=master
